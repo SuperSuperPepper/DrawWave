@@ -1,0 +1,37 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel DrawWave
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture2D<float4> Result;
+RWStructuredBuffer<float> Samples;
+RWStructuredBuffer<float> Waves;
+vector<float, 4> WaveColor;
+vector<float, 4> BgColor;
+int Offset;
+int PackSize; 
+
+[numthreads(8,8,1)]
+void DrawWave (uint3 id : SV_DispatchThreadID)
+{
+    uint width,height;
+    Result.GetDimensions(width,height);
+
+    float2 uv =float2(id.xy/float2(width,height));
+    uv.y = abs(((1.0 - uv.y)-0.5)*2);
+    float value =abs(Samples[Offset+floor(uv.x *width*PackSize)]);
+     
+    Result[id.xy] =lerp(half4(BgColor.x,BgColor.y,BgColor.z,1),half4(WaveColor.x,WaveColor.y,WaveColor.z,1),step(uv.y,max(value,0.05)));
+    
+    /*    
+    if (uv.y< max(value,0.05))
+    {
+          Result[id.xy] = half4(WaveColor.x,WaveColor.y,WaveColor.z,1);
+    }                
+    else{
+          Result[id.xy] = half4(BgColor.x,BgColor.y,BgColor.z,1);
+    } 
+    */
+       
+    //Result[id.xy] =float4(value,0,0,1);
+}
